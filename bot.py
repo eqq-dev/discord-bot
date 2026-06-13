@@ -1,5 +1,5 @@
 import discord
-import json, os
+import json, os, asyncio
 
 intents = discord.Intents.default()
 intents.members = True
@@ -28,7 +28,14 @@ async def on_member_join(member):
     try:
         await member.edit(nick=new_nick)
         save_counter(count + 1)
+        print(f"تم: {new_nick}")
     except discord.Forbidden:
         print("ما في صلاحية")
+    except Exception as e:
+        print(f"خطأ: {e}")
 
-client.run(os.environ.get("BOT_TOKEN"))
+token = os.environ.get("BOT_TOKEN")
+if not token:
+    print("BOT_TOKEN مو موجود!")
+else:
+    client.run(token)
