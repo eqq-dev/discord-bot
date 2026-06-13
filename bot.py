@@ -17,8 +17,21 @@ CHANNEL_ID_تقديم = 1333073603155202129
 CHANNEL_ID_مسؤولين = 1270689174474850326
 CHANNEL_ID_مخالفات = 1341702551338356767
 CHANNEL_ID_تقارير = 1333470649594679347
+CHANNEL_ID_دفع = 1333470649594679347
 
-# الرتب والخصومات
+ROLE_ID_عاطل = 1326202454181679155
+
+رتب_وظائف = {
+    "دكتور": 1254800517989924946,
+    "منظم": 1345104478772396032,
+    "شرطي": 1331719314973261894,
+    "قاضي": 1332765714737664031,
+    "تكسي": 1254800517964632175,
+    "هوست": 1254800517981405222,
+}
+
+BOT_ID_UNBELIEVABOAT = 292953664492929025
+
 رتب_خصومات = {
     1326183589263572994: 0,
     1326180985867337740: 25,
@@ -29,31 +42,29 @@ CHANNEL_ID_تقارير = 1333470649594679347
     1336853103567310979: 80,
 }
 
-# المخالفات وأسعارها
 مخالفات_قائمة = {
-    "1": {"اسم": "قطع إشارة", "سعر": 5000, "ملاحظة": ""},
-    "2": {"اسم": "تفحيط", "سعر": 5000, "ملاحظة": "حجز سيارة يومين"},
-    "3": {"اسم": "سرعة", "سعر": 4000, "ملاحظة": ""},
-    "4": {"اسم": "زره", "سعر": 3000, "ملاحظة": ""},
-    "5": {"اسم": "الهروب من الشرطة", "سعر": 7500, "ملاحظة": "حجز السيارة يومين"},
-    "6": {"اسم": "الهروب من الحادث", "سعر": 8000, "ملاحظة": ""},
-    "7": {"اسم": "دخول سيارة سيدان بالبر", "سعر": 4000, "ملاحظة": ""},
-    "8": {"اسم": "إزعاج بالبوري", "سعر": 2000, "ملاحظة": ""},
-    "9": {"اسم": "الهروب من التفتيش", "سعر": 10000, "ملاحظة": "حجز السيارة أربع أيام"},
-    "10": {"اسم": "عكس الطريق", "سعر": 4000, "ملاحظة": ""},
-    "11": {"اسم": "عدم تشغيل الأنوار", "سعر": 2000, "ملاحظة": ""},
-    "12": {"اسم": "سحب جلنطات", "سعر": 3000, "ملاحظة": ""},
-    "13": {"اسم": "المشي بدون لوحة", "سعر": 6000, "ملاحظة": ""},
-    "14": {"اسم": "الوقوف التام في الخط", "سعر": 5000, "ملاحظة": ""},
-    "15": {"اسم": "المراوغة بسرعة عالية", "سعر": 10000, "ملاحظة": "حجز المركبة حتى التسديد"},
-    "16": {"اسم": "طمس اللوحة بالثلج", "سعر": 7000, "ملاحظة": ""},
-    "17": {"اسم": "عدم حمل تأمين", "سعر": 2000, "ملاحظة": ""},
-    "18": {"اسم": "عدم حمل رخصة", "سعر": 2000, "ملاحظة": ""},
-    "19": {"اسم": "صدم الأقماع", "سعر": 2000, "ملاحظة": ""},
-    "20": {"اسم": "فك اللوحة الخلفية", "سعر": 5000, "ملاحظة": ""},
+    "1":  {"اسم": "قطع إشارة",              "سعر": 5000,  "ملاحظة": ""},
+    "2":  {"اسم": "تفحيط",                  "سعر": 5000,  "ملاحظة": "حجز سيارة يومين"},
+    "3":  {"اسم": "سرعة",                   "سعر": 4000,  "ملاحظة": ""},
+    "4":  {"اسم": "زره",                    "سعر": 3000,  "ملاحظة": ""},
+    "5":  {"اسم": "الهروب من الشرطة",       "سعر": 7500,  "ملاحظة": "حجز السيارة يومين"},
+    "6":  {"اسم": "الهروب من الحادث",       "سعر": 8000,  "ملاحظة": ""},
+    "7":  {"اسم": "دخول سيارة سيدان بالبر", "سعر": 4000,  "ملاحظة": ""},
+    "8":  {"اسم": "إزعاج بالبوري",          "سعر": 2000,  "ملاحظة": ""},
+    "9":  {"اسم": "الهروب من التفتيش",      "سعر": 10000, "ملاحظة": "حجز السيارة أربع أيام"},
+    "10": {"اسم": "عكس الطريق",             "سعر": 4000,  "ملاحظة": ""},
+    "11": {"اسم": "عدم تشغيل الأنوار",      "سعر": 2000,  "ملاحظة": ""},
+    "12": {"اسم": "سحب جلنطات",             "سعر": 3000,  "ملاحظة": ""},
+    "13": {"اسم": "المشي بدون لوحة",        "سعر": 6000,  "ملاحظة": ""},
+    "14": {"اسم": "الوقوف التام في الخط",   "سعر": 5000,  "ملاحظة": ""},
+    "15": {"اسم": "المراوغة بسرعة عالية",   "سعر": 10000, "ملاحظة": "حجز المركبة حتى التسديد"},
+    "16": {"اسم": "طمس اللوحة بالثلج",      "سعر": 7000,  "ملاحظة": ""},
+    "17": {"اسم": "عدم حمل تأمين",          "سعر": 2000,  "ملاحظة": ""},
+    "18": {"اسم": "عدم حمل رخصة",           "سعر": 2000,  "ملاحظة": ""},
+    "19": {"اسم": "صدم الأقماع",            "سعر": 2000,  "ملاحظة": ""},
+    "20": {"اسم": "فك اللوحة الخلفية",      "سعر": 5000,  "ملاحظة": ""},
 }
 
-# أسئلة كل وظيفة
 اسئلة_وظائف = {
     "شرطي": [
         "السؤال الأول للشرطي؟",
@@ -90,12 +101,12 @@ CHANNEL_ID_تقارير = 1333470649594679347
         "السؤال الرابع للمنظم؟",
         "السؤال الخامس للمنظم؟",
     ],
-    "دفاع مدني": [
-        "السؤال الأول لدفاع مدني؟",
-        "السؤال الثاني لدفاع مدني؟",
-        "السؤال الثالث لدفاع مدني؟",
-        "السؤال الرابع لدفاع مدني؟",
-        "السؤال الخامس لدفاع مدني؟",
+    "هوست": [
+        "السؤال الأول للهوست؟",
+        "السؤال الثاني للهوست؟",
+        "السؤال الثالث للهوست؟",
+        "السؤال الرابع للهوست؟",
+        "السؤال الخامس للهوست؟",
     ],
 }
 # =====================
@@ -137,21 +148,23 @@ async def send_apply_message():
     if not channel:
         return
 
+    view = discord.ui.View(timeout=None)
+    select = discord.ui.Select(
+        placeholder="اختر وظيفتك...",
+        custom_id="select_وظيفة",
+        options=[
+            discord.SelectOption(label=وظيفة, value=وظيفة)
+            for وظيفة in اسئلة_وظائف.keys()
+        ]
+    )
+    view.add_item(select)
+
     embed = discord.Embed(
         title="📋 تقديم وظائف",
-        description="اضغط على زر الوظيفة التي تريد التقديم عليها",
+        description="اختر الوظيفة التي تريد التقديم عليها من القائمة أدناه",
         color=0xFF0000
     )
     embed.set_footer(text="روسـت سـيـتـي")
-
-    view = discord.ui.View(timeout=None)
-    for وظيفة in اسئلة_وظائف.keys():
-        btn = discord.ui.Button(
-            label=وظيفة,
-            style=discord.ButtonStyle.primary,
-            custom_id=f"apply_{وظيفة}"
-        )
-        view.add_item(btn)
 
     await channel.send(embed=embed, view=view)
 
@@ -170,6 +183,12 @@ async def on_member_join(member):
 
 # ===== سلاش كوماند المخالفات =====
 @tree.command(name="مخالفة", description="تسجيل مخالفة على عضو")
+@app_commands.describe(
+    عسكري="يوزر العسكري",
+    مخالف="يوزر المخالف",
+    رقم_المخالفة="رقم المخالفة من 1 إلى 20",
+    دليل="وصف الدليل ورابط الصورة"
+)
 async def مخالفة_cmd(interaction: discord.Interaction,
                       عسكري: discord.Member,
                       مخالف: discord.Member,
@@ -177,7 +196,7 @@ async def مخالفة_cmd(interaction: discord.Interaction,
                       دليل: str):
 
     if رقم_المخالفة not in مخالفات_قائمة:
-        await interaction.response.send_message("رقم المخالفة غير صحيح!", ephemeral=True)
+        await interaction.response.send_message("رقم المخالفة غير صحيح! الأرقام من 1 إلى 20", ephemeral=True)
         return
 
     مخالفة = مخالفات_قائمة[رقم_المخالفة]
@@ -190,6 +209,7 @@ async def مخالفة_cmd(interaction: discord.Interaction,
     if member_id not in violations:
         violations[member_id] = []
 
+    violation_index = len(violations[member_id])
     violations[member_id].append({
         "مخالفة": مخالفة["اسم"],
         "سعر": سعر_بعد_خصم,
@@ -200,32 +220,31 @@ async def مخالفة_cmd(interaction: discord.Interaction,
 
     channel = client.get_channel(CHANNEL_ID_مخالفات)
 
-    embed = discord.Embed(title="# نموذج رصد المخالفات 👇", color=0xFF0000)
-    embed.add_field(name="__يوزر العسكري ( @ ) :__", value=عسكري.mention, inline=False)
-    embed.add_field(name="__يوزر المخالف ( @ ) :__", value=مخالف.mention, inline=False)
-    embed.add_field(name="__ما المخالفة التي ارتكبها :__", value=مخالفة["اسم"], inline=False)
-    embed.add_field(
-        name="__سعر المخالفة المرتكبة :__",
-        value=f"{سعر_بعد_خصم:,} ريال" + (f" (خصم {خصم}%)" if خصم > 0 else ""),
-        inline=False
+    ملاحظة_نص = f"\n> **ملاحظة:** {مخالفة['ملاحظة']}" if مخالفة["ملاحظة"] else ""
+    خصم_نص = f" _(خصم {خصم}% بسبب رتبتك)_" if خصم > 0 else ""
+
+    رسالة = (
+        f"# نموذج رصد المخالفات 👇\n"
+        f"**__يوزر العسكري ( @ ) :__** {عسكري.mention}\n\n"
+        f"**__يوزر المخالف ( @ ) :__** {مخالف.mention}\n\n"
+        f"**__ما المخالفة التي ارتكبها :__** {مخالفة['اسم']}\n\n"
+        f"**__سعر المخالفة المرتكبه :__** {سعر_بعد_خصم:,} ريال{خصم_نص}{ملاحظة_نص}\n\n"
+        f"**__الدليل مع صورة السيارة مع اللوحات :__**\n{دليل}\n\n"
+        f"``ملاحظه عدم الإجابة من العسكري سيتم الغاء المخالفة !``"
     )
-    if مخالفة["ملاحظة"]:
-        embed.add_field(name="ملاحظة:", value=مخالفة["ملاحظة"], inline=False)
-    embed.add_field(name="__الدليل مع صورة السيارة مع اللوحات :__", value=دليل, inline=False)
-    embed.set_footer(text="ملاحظه عدم الإجابة من العسكري سيتم الغاء المخالفة !")
 
     view = discord.ui.View(timeout=None)
     تسديد_btn = discord.ui.Button(
         label="تسديد المخالفة 💰",
         style=discord.ButtonStyle.success,
-        custom_id=f"تسديد_{مخالف.id}_{len(violations[member_id])-1}"
+        custom_id=f"تسديد_{مخالف.id}_{violation_index}_{سعر_بعد_خصم}"
     )
     view.add_item(تسديد_btn)
 
-    await channel.send(embed=embed, view=view)
+    await channel.send(رسالة, view=view)
     await interaction.response.send_message("✅ تم تسجيل المخالفة!", ephemeral=True)
 
-# ===== سلاش كوماند إضافة مخالفة يدوي =====
+# ===== سلاش كوماند إضافة مخالفة =====
 @tree.command(name="اضافة_مخالفة", description="إضافة مخالفة يدوياً على عضو")
 async def اضافة_مخالفة_cmd(interaction: discord.Interaction,
                              عضو: discord.Member,
@@ -235,7 +254,6 @@ async def اضافة_مخالفة_cmd(interaction: discord.Interaction,
     member_id = str(عضو.id)
     if member_id not in violations:
         violations[member_id] = []
-
     violations[member_id].append({
         "مخالفة": مخالفة,
         "سعر": سعر,
@@ -243,17 +261,19 @@ async def اضافة_مخالفة_cmd(interaction: discord.Interaction,
         "عسكري": interaction.user.id
     })
     save_violations(violations)
-    await interaction.response.send_message(f"✅ تم إضافة مخالفة **{مخالفة}** على {عضو.mention} بسعر {سعر:,} ريال", ephemeral=True)
+    await interaction.response.send_message(
+        f"✅ تم إضافة مخالفة **{مخالفة}** على {عضو.mention} بسعر {سعر:,} ريال",
+        ephemeral=True
+    )
 
 # ===== سلاش كوماند إزالة مخالفة =====
-@tree.command(name="ازالة_مخالفة", description="إزالة مخالفة عن عضو")
+@tree.command(name="ازالة_مخالفة", description="إزالة آخر مخالفة عن عضو")
 async def ازالة_مخالفة_cmd(interaction: discord.Interaction, عضو: discord.Member):
     violations = get_violations()
     member_id = str(عضو.id)
     if member_id not in violations or not violations[member_id]:
         await interaction.response.send_message("ما في مخالفات على هذا العضو!", ephemeral=True)
         return
-
     violations[member_id].pop()
     save_violations(violations)
     await interaction.response.send_message(f"✅ تم إزالة آخر مخالفة عن {عضو.mention}", ephemeral=True)
@@ -268,24 +288,20 @@ async def احصائيات_cmd(interaction: discord.Interaction):
 
     ترتيب = []
     for member_id, مخالفاته in violations.items():
-        مجموع = sum(م["سعر"] for م in مخالفاته if not م["مسددة"])
         عدد = len([م for م in مخالفاته if not م["مسددة"]])
+        مجموع = sum(م["سعر"] for م in مخالفاته if not م["مسددة"])
         if عدد > 0:
             ترتيب.append((member_id, عدد, مجموع))
 
     ترتيب.sort(key=lambda x: x[1], reverse=True)
 
-    embed = discord.Embed(title="🏆 أعلى المخالفات في السيرفر", color=0xFF0000)
+    نص = "# 🏆 أعلى المخالفات في السيرفر\n\n"
     for i, (member_id, عدد, مجموع) in enumerate(ترتيب[:10]):
         member = interaction.guild.get_member(int(member_id))
         اسم = member.mention if member else f"ID: {member_id}"
-        embed.add_field(
-            name=f"{i+1}. {اسم}",
-            value=f"عدد المخالفات: {عدد} | المجموع: {مجموع:,} ريال",
-            inline=False
-        )
+        نص += f"**{i+1}.** {اسم} — {عدد} مخالفة | {مجموع:,} ريال\n"
 
-    await interaction.response.send_message(embed=embed)
+    await interaction.response.send_message(نص)
 
 # ===== سلاش كوماند التقارير =====
 @tree.command(name="تقرير", description="إرسال تقرير على عضو")
@@ -293,30 +309,29 @@ async def تقرير_cmd(interaction: discord.Interaction,
                      المبلغ_عنه: discord.Member,
                      السبب: str,
                      الدليل: str):
-
     channel = client.get_channel(CHANNEL_ID_تقارير)
 
-    embed = discord.Embed(title="📢 تقرير جديد", color=0xFFFF00)
-    embed.add_field(name="المُبلِّغ", value=interaction.user.mention, inline=False)
-    embed.add_field(name="المُبلَّغ عنه", value=المبلغ_عنه.mention, inline=False)
-    embed.add_field(name="السبب", value=السبب, inline=False)
-    embed.add_field(name="الدليل", value=الدليل, inline=False)
+    رسالة = (
+        f"# 📢 تقرير جديد\n\n"
+        f"**__المُبلِّغ :__** {interaction.user.mention}\n\n"
+        f"**__المُبلَّغ عنه :__** {المبلغ_عنه.mention}\n\n"
+        f"**__السبب :__** {السبب}\n\n"
+        f"**__الدليل :__** {الدليل}"
+    )
 
     view = discord.ui.View(timeout=None)
-    قبول_btn = discord.ui.Button(
+    view.add_item(discord.ui.Button(
         label="قبول التقرير ✅",
         style=discord.ButtonStyle.success,
         custom_id=f"تقرير_قبول_{المبلغ_عنه.id}_{interaction.user.id}"
-    )
-    رفض_btn = discord.ui.Button(
+    ))
+    view.add_item(discord.ui.Button(
         label="رفض التقرير ❌",
         style=discord.ButtonStyle.danger,
         custom_id=f"تقرير_رفض_{المبلغ_عنه.id}_{interaction.user.id}"
-    )
-    view.add_item(قبول_btn)
-    view.add_item(رفض_btn)
+    ))
 
-    await channel.send(embed=embed, view=view)
+    await channel.send(رسالة, view=view)
     await interaction.response.send_message("✅ تم إرسال تقريرك!", ephemeral=True)
 
 @client.event
@@ -331,6 +346,7 @@ async def on_interaction(interaction):
         parts = custom_id.split("_")
         member_id = parts[1]
         index = int(parts[2])
+        سعر = int(parts[3])
 
         if str(interaction.user.id) != member_id:
             await interaction.response.send_message("هذه المخالفة مو عليك!", ephemeral=True)
@@ -341,22 +357,23 @@ async def on_interaction(interaction):
             violations[member_id][index]["مسددة"] = True
             save_violations(violations)
 
-            embed = discord.Embed(
-                title="✅ تم تسديد المخالفة",
-                description=f"{interaction.user.mention} سدد مخالفته بنجاح!",
-                color=0x00FF00
+            channel = client.get_channel(CHANNEL_ID_دفع)
+            await channel.send(f"!give <@{BOT_ID_UNBELIEVABOAT}> {سعر}")
+
+            await interaction.response.send_message(
+                f"✅ تم تسديد المخالفة بنجاح! المبلغ: {سعر:,} ريال",
+                ephemeral=True
             )
-            await interaction.response.send_message(embed=embed)
         else:
             await interaction.response.send_message("المخالفة مو موجودة!", ephemeral=True)
 
-    # التقديم على وظيفة
-    elif custom_id.startswith("apply_"):
-        وظيفة_مختارة = custom_id.replace("apply_", "")
+    # اختيار وظيفة من القائمة
+    elif custom_id == "select_وظيفة":
+        وظيفة_مختارة = interaction.data["values"][0]
         اسئلة = اسئلة_وظائف.get(وظيفة_مختارة, [])
 
         await interaction.response.send_message(
-            f"تم اختيار وظيفة **{وظيفة_مختارة}**، راح تصلك رسالة خاصة!",
+            f"تم اختيار وظيفة **{وظيفة_مختارة}**، راح تصلك رسالة خاصة بالأسئلة!",
             ephemeral=True
         )
 
@@ -364,7 +381,10 @@ async def on_interaction(interaction):
             return m.author == interaction.user and isinstance(m.channel, discord.DMChannel)
 
         try:
-            await interaction.user.send(f"مرحباً! بدأت تقديمك لوظيفة **{وظيفة_مختارة}** في روسـت سـيـتـي 👋\nأجب على الأسئلة:")
+            await interaction.user.send(
+                f"مرحباً! بدأت تقديمك لوظيفة **{وظيفة_مختارة}** في روسـت سـيـتـي 👋\n"
+                f"أجب على الأسئلة التالية:"
+            )
         except:
             await interaction.followup.send("فعّل الرسائل الخاصة!", ephemeral=True)
             return
@@ -385,16 +405,26 @@ async def on_interaction(interaction):
         if not قناة:
             return
 
-        embed = discord.Embed(title=f"تقديم جديد - {وظيفة_مختارة}", color=0xFFFF00)
-        embed.add_field(name="المتقدم", value=interaction.user.mention, inline=False)
+        نص_تقديم = (
+            f"# تقديم جديد — {وظيفة_مختارة}\n\n"
+            f"**المتقدم:** {interaction.user.mention}\n\n"
+        )
         for i, (سؤال, جواب) in enumerate(zip(اسئلة, إجابات)):
-            embed.add_field(name=f"س{i+1}: {سؤال}", value=جواب, inline=False)
+            نص_تقديم += f"**س{i+1}:** {سؤال}\n**ج:** {جواب}\n\n"
 
         view = discord.ui.View(timeout=None)
-        view.add_item(discord.ui.Button(label="قبول ✅", style=discord.ButtonStyle.success, custom_id=f"قبول_{interaction.user.id}_{وظيفة_مختارة}"))
-        view.add_item(discord.ui.Button(label="رفض ❌", style=discord.ButtonStyle.danger, custom_id=f"رفض_{interaction.user.id}_{وظيفة_مختارة}"))
+        view.add_item(discord.ui.Button(
+            label="قبول ✅",
+            style=discord.ButtonStyle.success,
+            custom_id=f"قبول_{interaction.user.id}_{وظيفة_مختارة}"
+        ))
+        view.add_item(discord.ui.Button(
+            label="رفض ❌",
+            style=discord.ButtonStyle.danger,
+            custom_id=f"رفض_{interaction.user.id}_{وظيفة_مختارة}"
+        ))
 
-        await قناة.send(embed=embed, view=view)
+        await قناة.send(نص_تقديم, view=view)
 
     # قبول/رفض التقديم
     elif custom_id.startswith("قبول_") or custom_id.startswith("رفض_"):
@@ -409,32 +439,49 @@ async def on_interaction(interaction):
             return
 
         if نوع == "قبول":
+            رتبة_id = رتب_وظائف.get(وظيفة)
+            رتبة_عاطل = interaction.guild.get_role(ROLE_ID_عاطل)
+            if رتبة_عاطل and رتبة_عاطل in member.roles:
+                await member.remove_roles(رتبة_عاطل)
+            if رتبة_id:
+                رتبة = interaction.guild.get_role(رتبة_id)
+                if رتبة:
+                    await member.add_roles(رتبة)
             try:
-                await member.send(f"🎉 تهانينا! تم **قبولك** في وظيفة **{وظيفة}** في روسـت سـيـتـي!")
+                await member.send(
+                    f"🎉 تهانينا! تم **قبولك** في وظيفة **{وظيفة}** في روسـت سـيـتـي!"
+                )
             except:
                 pass
-            await interaction.response.send_message(f"✅ تم قبول {member.mention} في وظيفة {وظيفة}", ephemeral=True)
+            await interaction.response.send_message(
+                f"✅ تم قبول {member.mention} في وظيفة {وظيفة}",
+                ephemeral=True
+            )
         else:
             try:
-                await member.send(f"❌ عذراً، تم **رفض** تقديمك في وظيفة **{وظيفة}** في روسـت سـيـتـي.")
+                await member.send(
+                    f"❌ عذراً، تم **رفض** تقديمك في وظيفة **{وظيفة}** في روسـت سـيـتـي."
+                )
             except:
                 pass
-            await interaction.response.send_message(f"❌ تم رفض {member.mention}", ephemeral=True)
+            await interaction.response.send_message(
+                f"❌ تم رفض {member.mention}",
+                ephemeral=True
+            )
 
     # قبول/رفض التقرير
     elif custom_id.startswith("تقرير_"):
         parts = custom_id.split("_")
         نوع = parts[1]
-        مبلغ_عنه_id = int(parts[2])
-        مبلغ_id = int(parts[3])
-
-        مبلغ_عنه = interaction.guild.get_member(مبلغ_عنه_id)
-        مبلغ = interaction.guild.get_member(مبلغ_id)
+        مبلغ_عنه = interaction.guild.get_member(int(parts[2]))
 
         if نوع == "قبول":
-            await interaction.response.send_message(f"✅ تم قبول التقرير على {مبلغ_عنه.mention if مبلغ_عنه else مبلغ_عنه_id}", ephemeral=True)
+            await interaction.response.send_message(
+                f"✅ تم قبول التقرير على {مبلغ_عنه.mention if مبلغ_عنه else 'العضو'}",
+                ephemeral=True
+            )
         else:
-            await interaction.response.send_message(f"❌ تم رفض التقرير", ephemeral=True)
+            await interaction.response.send_message("❌ تم رفض التقرير", ephemeral=True)
 
 token = os.environ.get("BOT_TOKEN")
 if not token:
