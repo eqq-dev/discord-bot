@@ -9,8 +9,8 @@ client = discord.Client(intents=intents)
 COUNTER_FILE = "counter.json"
 
 # ===== تعديل هنا =====
-CHANNEL_ID_تقديم = 1333073603155202129  # ايدي روم رسالة التقديم
-CHANNEL_ID_مسؤولين = 1270689174474850326  # ايدي روم قبول-رفض
+CHANNEL_ID_تقديم = 1333073603155202129
+CHANNEL_ID_مسؤولين = 1270689174474850326
 
 وظائف = [
     "دكتور",
@@ -47,7 +47,7 @@ async def on_ready():
     await send_apply_message()
 
 async def send_apply_message():
-    channel = client.get_channel(1333073603155202129_تقديم)
+    channel = client.get_channel(CHANNEL_ID_تقديم)
     if not channel:
         return
 
@@ -89,7 +89,6 @@ async def on_interaction(interaction):
 
     custom_id = interaction.data["custom_id"]
 
-    # زر الوظيفة
     if custom_id.startswith("apply_"):
         وظيفة_مختارة = custom_id.replace("apply_", "")
         await interaction.response.send_message(
@@ -118,7 +117,7 @@ async def on_interaction(interaction):
 
         await interaction.user.send("✅ تم إرسال تقديمك! انتظر رد المسؤولين.")
 
-        قناة = client.get_channel(1270689174474850326_مسؤولين)
+        قناة = client.get_channel(CHANNEL_ID_مسؤولين)
         if not قناة:
             return
 
@@ -146,7 +145,6 @@ async def on_interaction(interaction):
 
         await قناة.send(embed=embed, view=view)
 
-    # قبول أو رفض
     elif custom_id.startswith("قبول_") or custom_id.startswith("رفض_"):
         parts = custom_id.split("_")
         نوع = parts[0]
