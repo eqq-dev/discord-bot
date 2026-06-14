@@ -187,14 +187,17 @@ async def on_member_join(member):
     عسكري="يوزر العسكري",
     مخالف="يوزر المخالف",
     رقم_المخالفة="رقم المخالفة من 1 إلى 20",
-    دليل="وصف الدليل ورابط الصورة"
+    دليل="وصف الدليل",
+    صورة="صورة السيارة مع اللوحات"
 )
-async def مخالفة_cmd(interaction: discord.Interaction,
-                      عسكري: discord.Member,
-                      مخالف: discord.Member,
-                      رقم_المخالفة: str,
-                      دليل: str):
-
+async def مخالفة_cmd(
+    interaction: discord.Interaction,
+    عسكري: discord.Member,
+    مخالف: discord.Member,
+    رقم_المخالفة: str,
+    دليل: str,
+    صورة: discord.Attachment
+):
     if رقم_المخالفة not in مخالفات_قائمة:
         await interaction.response.send_message("رقم المخالفة غير صحيح! الأرقام من 1 إلى 20", ephemeral=True)
         return
@@ -229,17 +232,17 @@ async def مخالفة_cmd(interaction: discord.Interaction,
         f"**__يوزر المخالف ( @ ) :__** {مخالف.mention}\n\n"
         f"**__ما المخالفة التي ارتكبها :__** {مخالفة['اسم']}\n\n"
         f"**__سعر المخالفة المرتكبه :__** {سعر_بعد_خصم:,} ريال{خصم_نص}{ملاحظة_نص}\n\n"
-        f"**__الدليل مع صورة السيارة مع اللوحات :__**\n{دليل}\n\n"
+        f"**__الدليل مع صورة السيارة مع اللوحات :__**\n{دليل}\n"
+        f"{صورة.url}\n\n"
         f"``ملاحظه عدم الإجابة من العسكري سيتم الغاء المخالفة !``"
     )
 
     view = discord.ui.View(timeout=None)
-    تسديد_btn = discord.ui.Button(
+    view.add_item(discord.ui.Button(
         label="تسديد المخالفة 💰",
         style=discord.ButtonStyle.success,
         custom_id=f"تسديد_{مخالف.id}_{violation_index}_{سعر_بعد_خصم}"
-    )
-    view.add_item(تسديد_btn)
+    ))
 
     await channel.send(رسالة, view=view)
     await interaction.response.send_message("✅ تم تسجيل المخالفة!", ephemeral=True)
@@ -276,7 +279,10 @@ async def ازالة_مخالفة_cmd(interaction: discord.Interaction, عضو: 
         return
     violations[member_id].pop()
     save_violations(violations)
-    await interaction.response.send_message(f"✅ تم إزالة آخر مخالفة عن {عضو.mention}", ephemeral=True)
+    await interaction.response.send_message(
+        f"✅ تم إزالة آخر مخالفة عن {عضو.mention}",
+        ephemeral=True
+    )
 
 # ===== سلاش كوماند الإحصائيات =====
 @tree.command(name="احصائيات", description="أعلى المخالفات في السيرفر")
@@ -358,21 +364,21 @@ async def on_interaction(interaction):
             save_violations(violations)
 
             try:
-    await interaction.user.send(
-        f"💰 لتسديد مخالفتك، انسخ هذا الأمر وأرسله في روم تسديد المخالفات:\n"
-        f"```\n!give <@{BOT_ID_UNBELIEVABOAT}> {سعر}\n```"
-    )
-except:
-    pass
+                await interaction.user.send(
+                    f"💰 لتسديد مخالفتك، انسخ هذا الأمر وأرسله في روم تسديد المخالفات:\n"
+                    f"```\n!give <@{BOT_ID_UNBELIEVABOAT}> {سعر}\n```"
+                )
+            except:
+                pass
 
-await interaction.response.send_message(
-    f"✅ تم! راجع رسائلك الخاصة للحصول على أمر التسديد.",
-    ephemeral=True
-)
+            await interaction.response.send_message(
+                "✅ راجع رسائلك الخاصة للحصول على أمر التسديد!",
+                ephemeral=True
+            )
         else:
             await interaction.response.send_message("المخالفة مو موجودة!", ephemeral=True)
 
-    # اختيار وظيفة من القائمة
+    # اختيار وظيفة
     elif custom_id == "select_وظيفة":
         وظيفة_مختارة = interaction.data["values"][0]
         اسئلة = اسئلة_وظائف.get(وظيفة_مختارة, [])
