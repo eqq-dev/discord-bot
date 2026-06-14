@@ -357,13 +357,18 @@ async def on_interaction(interaction):
             violations[member_id][index]["مسددة"] = True
             save_violations(violations)
 
-            channel = client.get_channel(CHANNEL_ID_دفع)
-            await channel.send(f"!give <@{BOT_ID_UNBELIEVABOAT}> {سعر}")
+            try:
+    await interaction.user.send(
+        f"💰 لتسديد مخالفتك، انسخ هذا الأمر وأرسله في روم تسديد المخالفات:\n"
+        f"```\n!give <@{BOT_ID_UNBELIEVABOAT}> {سعر}\n```"
+    )
+except:
+    pass
 
-            await interaction.response.send_message(
-                f"✅ تم تسديد المخالفة بنجاح! المبلغ: {سعر:,} ريال",
-                ephemeral=True
-            )
+await interaction.response.send_message(
+    f"✅ تم! راجع رسائلك الخاصة للحصول على أمر التسديد.",
+    ephemeral=True
+)
         else:
             await interaction.response.send_message("المخالفة مو موجودة!", ephemeral=True)
 
