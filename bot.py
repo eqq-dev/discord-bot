@@ -181,7 +181,6 @@ async def on_member_join(member):
     except Exception as e:
         print(f"خطأ: {e}")
 
-# ===== سلاش كوماند المخالفات =====
 @tree.command(name="مخالفة", description="تسجيل مخالفة على عضو")
 @app_commands.describe(
     عسكري="يوزر العسكري",
@@ -199,7 +198,7 @@ async def مخالفة_cmd(
     صورة: discord.Attachment
 ):
     if رقم_المخالفة not in مخالفات_قائمة:
-        await interaction.response.send_message("رقم المخالفة غير صحيح! الأرقام من 1 إلى 20", ephemeral=True)
+        await interaction.response.send_message("رقم المخالفة غير صحيح!", ephemeral=True)
         return
 
     مخالفة = مخالفات_قائمة[رقم_المخالفة]
@@ -222,7 +221,6 @@ async def مخالفة_cmd(
     save_violations(violations)
 
     channel = client.get_channel(CHANNEL_ID_مخالفات)
-
     ملاحظة_نص = f"\n> **ملاحظة:** {مخالفة['ملاحظة']}" if مخالفة["ملاحظة"] else ""
     خصم_نص = f" _(خصم {خصم}% بسبب رتبتك)_" if خصم > 0 else ""
 
@@ -247,7 +245,6 @@ async def مخالفة_cmd(
     await channel.send(رسالة, view=view)
     await interaction.response.send_message("✅ تم تسجيل المخالفة!", ephemeral=True)
 
-# ===== سلاش كوماند إضافة مخالفة =====
 @tree.command(name="اضافة_مخالفة", description="إضافة مخالفة يدوياً على عضو")
 async def اضافة_مخالفة_cmd(interaction: discord.Interaction,
                              عضو: discord.Member,
@@ -269,7 +266,6 @@ async def اضافة_مخالفة_cmd(interaction: discord.Interaction,
         ephemeral=True
     )
 
-# ===== سلاش كوماند إزالة مخالفة =====
 @tree.command(name="ازالة_مخالفة", description="إزالة آخر مخالفة عن عضو")
 async def ازالة_مخالفة_cmd(interaction: discord.Interaction, عضو: discord.Member):
     violations = get_violations()
@@ -284,7 +280,6 @@ async def ازالة_مخالفة_cmd(interaction: discord.Interaction, عضو: 
         ephemeral=True
     )
 
-# ===== سلاش كوماند الإحصائيات =====
 @tree.command(name="احصائيات", description="أعلى المخالفات في السيرفر")
 async def احصائيات_cmd(interaction: discord.Interaction):
     violations = get_violations()
@@ -309,7 +304,6 @@ async def احصائيات_cmd(interaction: discord.Interaction):
 
     await interaction.response.send_message(نص)
 
-# ===== سلاش كوماند التقارير =====
 @tree.command(name="تقرير", description="إرسال تقرير على عضو")
 async def تقرير_cmd(interaction: discord.Interaction,
                      المبلغ_عنه: discord.Member,
@@ -340,6 +334,33 @@ async def تقرير_cmd(interaction: discord.Interaction,
     await channel.send(رسالة, view=view)
     await interaction.response.send_message("✅ تم إرسال تقريرك!", ephemeral=True)
 
+@tree.command(name="شيل_رتب", description="شيل رتبة معينة من كل الأعضاء")
+@app_commands.describe(رتبة="الرتبة اللي تبي تشيلها من الكل")
+async def شيل_رتب_cmd(interaction: discord.Interaction, رتبة: discord.Role):
+    if not interaction.user.guild_permissions.administrator:
+        await interaction.response.send_message("ما عندك صلاحية!", ephemeral=True)
+        return
+
+    await interaction.response.send_message(
+        f"جاري شيل رتبة **{رتبة.name}** من كل الأعضاء، انتظر...",
+        ephemeral=True
+    )
+
+    عدد = 0
+    for member in interaction.guild.members:
+        if رتبة in member.roles:
+            try:
+                await member.remove_roles(رتبة)
+                عدد += 1
+                await asyncio.sleep(0.5)
+            except:
+                pass
+
+    await interaction.followup.send(
+        f"✅ تم شيل رتبة **{رتبة.name}** من **{عدد}** عضو!",
+        ephemeral=True
+    )
+
 @client.event
 async def on_interaction(interaction):
     if interaction.type != discord.InteractionType.component:
@@ -347,7 +368,6 @@ async def on_interaction(interaction):
 
     custom_id = interaction.data["custom_id"]
 
-    # تسديد المخالفة
     if custom_id.startswith("تسديد_"):
         parts = custom_id.split("_")
         member_id = parts[1]
@@ -378,7 +398,6 @@ async def on_interaction(interaction):
         else:
             await interaction.response.send_message("المخالفة مو موجودة!", ephemeral=True)
 
-    # اختيار وظيفة
     elif custom_id == "select_وظيفة":
         وظيفة_مختارة = interaction.data["values"][0]
         اسئلة = اسئلة_وظائف.get(وظيفة_مختارة, [])
@@ -437,7 +456,6 @@ async def on_interaction(interaction):
 
         await قناة.send(نص_تقديم, view=view)
 
-    # قبول/رفض التقديم
     elif custom_id.startswith("قبول_") or custom_id.startswith("رفض_"):
         parts = custom_id.split("_")
         نوع = parts[0]
@@ -480,7 +498,6 @@ async def on_interaction(interaction):
                 ephemeral=True
             )
 
-    # قبول/رفض التقرير
     elif custom_id.startswith("تقرير_"):
         parts = custom_id.split("_")
         نوع = parts[1]
