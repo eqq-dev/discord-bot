@@ -334,30 +334,36 @@ async def تقرير_cmd(interaction: discord.Interaction,
     await channel.send(رسالة, view=view)
     await interaction.response.send_message("✅ تم إرسال تقريرك!", ephemeral=True)
 
-@tree.command(name="شيل_رتب", description="شيل رتبة معينة من كل الأعضاء")
-@app_commands.describe(رتبة="الرتبة اللي تبي تشيلها من الكل")
-async def شيل_رتب_cmd(interaction: discord.Interaction, رتبة: discord.Role):
+@tree.command(name="شيل_رتب", description="شيل كل رتب الوظائف من كل الأعضاء")
+async def شيل_رتب_cmd(interaction: discord.Interaction):
     if not interaction.user.guild_permissions.administrator:
         await interaction.response.send_message("ما عندك صلاحية!", ephemeral=True)
         return
 
     await interaction.response.send_message(
-        f"جاري شيل رتبة **{رتبة.name}** من كل الأعضاء، انتظر...",
+        "جاري شيل كل رتب الوظائف من كل الأعضاء، انتظر...",
         ephemeral=True
     )
 
+    رتب_ids = list(رتب_وظائف.values())
     عدد = 0
+
     for member in interaction.guild.members:
-        if رتبة in member.roles:
+        رتب_للشيل = [
+            interaction.guild.get_role(rid)
+            for rid in رتب_ids
+            if interaction.guild.get_role(rid) in member.roles
+        ]
+        if رتب_للشيل:
             try:
-                await member.remove_roles(رتبة)
+                await member.remove_roles(*رتب_للشيل)
                 عدد += 1
                 await asyncio.sleep(0.5)
             except:
                 pass
 
     await interaction.followup.send(
-        f"✅ تم شيل رتبة **{رتبة.name}** من **{عدد}** عضو!",
+        f"✅ تم شيل رتب الوظائف من **{عدد}** عضو!",
         ephemeral=True
     )
 
