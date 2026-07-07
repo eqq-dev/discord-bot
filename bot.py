@@ -1,5 +1,5 @@
 import discord
-import json, os, asyncio
+import json, os, asyncio, random
 from discord import app_commands
 
 intents = discord.Intents.default()
@@ -9,26 +9,19 @@ intents.message_content = True
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 
-COUNTER_FILE = "counter.json"
 VIOLATIONS_FILE = "violations.json"
+USED_IDS_FILE = "used_ids.json"
 
 # ===== تعديل هنا =====
-CHANNEL_ID_تقديم = 1333073603155202129
+CHANNEL_ID_تفعيل = 1523842165547991110
+CHANNEL_ID_مخالفات = 1524094664288768000
+CHANNEL_ID_دفع = 1254800520690794556
+
+ROLE_ID_مفعل = 1523811436034527384
+ROLE_ID_تصريح = 1523811546428473394
+ROLE_ID_غير_مفعل = 1254800517943525518
+
 CHANNEL_ID_مسؤولين = 1270689174474850326
-CHANNEL_ID_مخالفات = 1341702551338356767
-CHANNEL_ID_تقارير = 1333470649594679347
-CHANNEL_ID_دفع = 1333470649594679347
-
-ROLE_ID_عاطل = 1326202454181679155
-
-رتب_وظائف = {
-    "دكتور": 1254800517989924946,
-    "منظم": 1345104478772396032,
-    "شرطي": 1331719314973261894,
-    "قاضي": 1332765714737664031,
-    "تكسي": 1254800517964632175,
-    "هوست": 1254800517981405222,
-}
 
 BOT_ID_UNBELIEVABOAT = 292953664492929025
 
@@ -64,62 +57,7 @@ BOT_ID_UNBELIEVABOAT = 292953664492929025
     "19": {"اسم": "صدم الأقماع",            "سعر": 2000,  "ملاحظة": ""},
     "20": {"اسم": "فك اللوحة الخلفية",      "سعر": 5000,  "ملاحظة": ""},
 }
-
-اسئلة_وظائف = {
-    "شرطي": [
-        "السؤال الأول للشرطي؟",
-        "السؤال الثاني للشرطي؟",
-        "السؤال الثالث للشرطي؟",
-        "السؤال الرابع للشرطي؟",
-        "السؤال الخامس للشرطي؟",
-    ],
-    "دكتور": [
-        "السؤال الأول للدكتور؟",
-        "السؤال الثاني للدكتور؟",
-        "السؤال الثالث للدكتور؟",
-        "السؤال الرابع للدكتور؟",
-        "السؤال الخامس للدكتور؟",
-    ],
-    "تكسي": [
-        "السؤال الأول للتكسي؟",
-        "السؤال الثاني للتكسي؟",
-        "السؤال الثالث للتكسي؟",
-        "السؤال الرابع للتكسي؟",
-        "السؤال الخامس للتكسي؟",
-    ],
-    "قاضي": [
-        "السؤال الأول للقاضي؟",
-        "السؤال الثاني للقاضي؟",
-        "السؤال الثالث للقاضي؟",
-        "السؤال الرابع للقاضي؟",
-        "السؤال الخامس للقاضي؟",
-    ],
-    "منظم": [
-        "السؤال الأول للمنظم؟",
-        "السؤال الثاني للمنظم؟",
-        "السؤال الثالث للمنظم؟",
-        "السؤال الرابع للمنظم؟",
-        "السؤال الخامس للمنظم؟",
-    ],
-    "هوست": [
-        "السؤال الأول للهوست؟",
-        "السؤال الثاني للهوست؟",
-        "السؤال الثالث للهوست؟",
-        "السؤال الرابع للهوست؟",
-        "السؤال الخامس للهوست؟",
-    ],
-}
 # =====================
-
-def get_counter():
-    if os.path.exists(COUNTER_FILE):
-        with open(COUNTER_FILE) as f:
-            return json.load(f).get("count", 1000)
-    return 1000
-
-def save_counter(count):
-    with open(COUNTER_FILE, "w") as f:
-        json.dump({"count": count}, f)
 
 def get_violations():
     if os.path.exists(VIOLATIONS_FILE):
@@ -131,6 +69,26 @@ def save_violations(data):
     with open(VIOLATIONS_FILE, "w") as f:
         json.dump(data, f)
 
+def get_used_ids():
+    if os.path.exists(USED_IDS_FILE):
+        with open(USED_IDS_FILE) as f:
+            return json.load(f)
+    return []
+
+def save_used_ids(data):
+    with open(USED_IDS_FILE, "w") as f:
+        json.dump(data, f)
+
+def get_random_id():
+    used = get_used_ids()
+    available = [i for i in range(1000, 3001) if i not in used]
+    if not available:
+        return random.randint(1000, 3000)
+    chosen = random.choice(available)
+    used.append(chosen)
+    save_used_ids(used)
+    return chosen
+
 def get_discount(member):
     for role in member.roles:
         if role.id in رتب_خصومات:
@@ -141,46 +99,31 @@ def get_discount(member):
 async def on_ready():
     print(f"البوت شغال: {client.user}")
     await tree.sync()
-    await send_apply_message()
+    await send_activation_message()
 
-async def send_apply_message():
-    channel = client.get_channel(CHANNEL_ID_تقديم)
+async def send_activation_message():
+    channel = client.get_channel(CHANNEL_ID_تفعيل)
     if not channel:
         return
 
-    view = discord.ui.View(timeout=None)
-    select = discord.ui.Select(
-        placeholder="اختر وظيفتك...",
-        custom_id="select_وظيفة",
-        options=[
-            discord.SelectOption(label=وظيفة, value=وظيفة)
-            for وظيفة in اسئلة_وظائف.keys()
-        ]
-    )
-    view.add_item(select)
-
     embed = discord.Embed(
-        title="📋 تقديم وظائف",
-        description="اختر الوظيفة التي تريد التقديم عليها من القائمة أدناه",
+        title="🎮 تفعيل الحساب",
+        description="اضغط على الزر أدناه لطلب التفعيل والانضمام إلى روسـت سـيـتـي",
         color=0xFF0000
     )
     embed.set_footer(text="روسـت سـيـتـي")
 
+    view = discord.ui.View(timeout=None)
+    view.add_item(discord.ui.Button(
+        label="اضغط هنا لطلب التفعيل",
+        style=discord.ButtonStyle.primary,
+        custom_id="طلب_تفعيل",
+        row=0
+    ))
+
     await channel.send(embed=embed, view=view)
 
-@client.event
-async def on_member_join(member):
-    count = get_counter()
-    new_nick = f"rc|????|{count}"
-    try:
-        await member.edit(nick=new_nick)
-        save_counter(count + 1)
-        print(f"تم: {new_nick}")
-    except discord.Forbidden:
-        print("ما في صلاحية")
-    except Exception as e:
-        print(f"خطأ: {e}")
-
+# ===== سلاش كوماند المخالفات =====
 @tree.command(name="مخالفة", description="تسجيل مخالفة على عضو")
 @app_commands.describe(
     عسكري="يوزر العسكري",
@@ -245,6 +188,7 @@ async def مخالفة_cmd(
     await channel.send(رسالة, view=view)
     await interaction.response.send_message("✅ تم تسجيل المخالفة!", ephemeral=True)
 
+# ===== سلاش كوماند إضافة مخالفة =====
 @tree.command(name="اضافة_مخالفة", description="إضافة مخالفة يدوياً على عضو")
 async def اضافة_مخالفة_cmd(interaction: discord.Interaction,
                              عضو: discord.Member,
@@ -266,6 +210,7 @@ async def اضافة_مخالفة_cmd(interaction: discord.Interaction,
         ephemeral=True
     )
 
+# ===== سلاش كوماند إزالة مخالفة =====
 @tree.command(name="ازالة_مخالفة", description="إزالة آخر مخالفة عن عضو")
 async def ازالة_مخالفة_cmd(interaction: discord.Interaction, عضو: discord.Member):
     violations = get_violations()
@@ -280,6 +225,7 @@ async def ازالة_مخالفة_cmd(interaction: discord.Interaction, عضو: 
         ephemeral=True
     )
 
+# ===== سلاش كوماند الإحصائيات =====
 @tree.command(name="احصائيات", description="أعلى المخالفات في السيرفر")
 async def احصائيات_cmd(interaction: discord.Interaction):
     violations = get_violations()
@@ -304,89 +250,6 @@ async def احصائيات_cmd(interaction: discord.Interaction):
 
     await interaction.response.send_message(نص)
 
-@tree.command(name="تقرير", description="إرسال تقرير على عضو")
-async def تقرير_cmd(interaction: discord.Interaction,
-                     المبلغ_عنه: discord.Member,
-                     السبب: str,
-                     الدليل: str):
-    channel = client.get_channel(CHANNEL_ID_تقارير)
-
-    رسالة = (
-        f"# 📢 تقرير جديد\n\n"
-        f"**__المُبلِّغ :__** {interaction.user.mention}\n\n"
-        f"**__المُبلَّغ عنه :__** {المبلغ_عنه.mention}\n\n"
-        f"**__السبب :__** {السبب}\n\n"
-        f"**__الدليل :__** {الدليل}"
-    )
-
-    view = discord.ui.View(timeout=None)
-    view.add_item(discord.ui.Button(
-        label="قبول التقرير ✅",
-        style=discord.ButtonStyle.success,
-        custom_id=f"تقرير_قبول_{المبلغ_عنه.id}_{interaction.user.id}"
-    ))
-    view.add_item(discord.ui.Button(
-        label="رفض التقرير ❌",
-        style=discord.ButtonStyle.danger,
-        custom_id=f"تقرير_رفض_{المبلغ_عنه.id}_{interaction.user.id}"
-    ))
-
-    await channel.send(رسالة, view=view)
-    await interaction.response.send_message("✅ تم إرسال تقريرك!", ephemeral=True)
-
-@tree.command(name="شيل_رتب", description="شيل كل الرتب من كل الأعضاء")
-async def شيل_رتب_cmd(interaction: discord.Interaction):
-    if not interaction.user.guild_permissions.administrator:
-        await interaction.response.send_message("ما عندك صلاحية!", ephemeral=True)
-        return
-
-    await interaction.response.send_message(
-        "جاري شيل كل الرتب من كل الأعضاء، انتظر...",
-        ephemeral=True
-    )
-
-    عدد = 0
-    for member in interaction.guild.members:
-        رتب_للشيل = [
-            role for role in member.roles
-            if role.name != "@everyone"
-            and not role.managed
-            and role.position < interaction.guild.me.top_role.position
-        ]
-        if رتب_للشيل:
-            try:
-                await member.remove_roles(*رتب_للشيل)
-                عدد += 1
-                await asyncio.sleep(0.5)
-            except:
-                pass
-
-    await interaction.followup.send(
-        f"✅ تم شيل كل الرتب من **{عدد}** عضو!",
-        ephemeral=True
-    )
-    رتب_ids = list(رتب_وظائف.values())
-    عدد = 0
-
-    for member in interaction.guild.members:
-        رتب_للشيل = [
-            interaction.guild.get_role(rid)
-            for rid in رتب_ids
-            if interaction.guild.get_role(rid) in member.roles
-        ]
-        if رتب_للشيل:
-            try:
-                await member.remove_roles(*رتب_للشيل)
-                عدد += 1
-                await asyncio.sleep(0.5)
-            except:
-                pass
-
-    await interaction.followup.send(
-        f"✅ تم شيل رتب الوظائف من **{عدد}** عضو!",
-        ephemeral=True
-    )
-
 @client.event
 async def on_interaction(interaction):
     if interaction.type != discord.InteractionType.component:
@@ -394,7 +257,169 @@ async def on_interaction(interaction):
 
     custom_id = interaction.data["custom_id"]
 
-    if custom_id.startswith("تسديد_"):
+    # زر طلب التفعيل
+    if custom_id == "طلب_تفعيل":
+        channel = client.get_channel(CHANNEL_ID_تفعيل)
+
+        رسالة_الروم = await channel.send(
+            f"{interaction.user.mention}",
+            embed=discord.Embed(
+                description="توجّه إلى الخاص لطلب التفعيل 👇",
+                color=0xFF0000
+            ),
+            view=discord.ui.View(timeout=None)
+        )
+
+        view = discord.ui.View(timeout=None)
+        view.add_item(discord.ui.Button(
+            label="توجه للخاص 📩",
+            style=discord.ButtonStyle.link,
+            url=f"https://discord.com/users/{client.user.id}"
+        ))
+
+        await رسالة_الروم.edit(view=view)
+        await interaction.response.defer()
+
+        def check_dm(m):
+            return m.author == interaction.user and isinstance(m.channel, discord.DMChannel)
+
+        try:
+            embed_جاهز = discord.Embed(
+                description="هل أنت مستعد لطلب التفعيل؟",
+                color=0xFF0000
+            )
+            view_جاهز = discord.ui.View(timeout=None)
+            view_جاهز.add_item(discord.ui.Button(
+                label="نعم ✅",
+                style=discord.ButtonStyle.success,
+                custom_id=f"جاهز_{interaction.user.id}"
+            ))
+            await interaction.user.send(embed=embed_جاهز, view=view_جاهز)
+        except:
+            await channel.send(
+                f"{interaction.user.mention} فعّل الرسائل الخاصة!",
+                delete_after=5
+            )
+
+    # زر نعم جاهز
+    elif custom_id.startswith("جاهز_"):
+        member_id = int(custom_id.split("_")[1])
+        if interaction.user.id != member_id:
+            await interaction.response.send_message("هذا مو لك!", ephemeral=True)
+            return
+
+        await interaction.response.send_message("✅ ممتاز! سيبدأ معك الآن", ephemeral=True)
+
+        def check_dm(m):
+            return m.author == interaction.user and isinstance(m.channel, discord.DMChannel)
+
+        # السؤال الأول - الاسم الحقيقي
+        await interaction.user.send("**وش اسـمـك ؟**")
+        try:
+            رد1 = await client.wait_for("message", check=check_dm, timeout=120)
+            اسم_حقيقي = رد1.content
+        except:
+            await interaction.user.send("انتهى الوقت! قدم مرة أخرى.")
+            return
+
+        # السؤال الثاني - اسم الروبلوكس
+        await interaction.user.send("**اسـمـك بـالـلـعـبـه ؟**")
+        try:
+            رد2 = await client.wait_for("message", check=check_dm, timeout=120)
+            اسم_روبلوكس = رد2.content
+        except:
+            await interaction.user.send("انتهى الوقت! قدم مرة أخرى.")
+            return
+
+        # السؤال الثالث
+        await interaction.user.send("**اذكـر لـي ثـلاثـه مـن قـوانـيـن الديـسـكـورد ؟**")
+        try:
+            رد3 = await client.wait_for("message", check=check_dm, timeout=180)
+        except:
+            await interaction.user.send("انتهى الوقت! قدم مرة أخرى.")
+            return
+
+        # السؤال الرابع
+        await interaction.user.send("**هـل تـتـعـهـد بـانـك سـتـلـتـزم بـالـقـوانـيـن؟**")
+        try:
+            رد4 = await client.wait_for("message", check=check_dm, timeout=120)
+        except:
+            await interaction.user.send("انتهى الوقت! قدم مرة أخرى.")
+            return
+
+        # السؤال الخامس - الحلف مع التحقق
+        await interaction.user.send(
+            f"**احلف انك سوف تلتزم بقوانين الديسكورد جميعها وقوانين السيرفر جميعها وقوانين الرول جميعها كذلك "
+            f"واحلف انك ماتخرب السيرفر او تساهم في تخريب السيرفر واحلف انك ماتشتم وتقذف والسب بجميع انواعه!\n\n"
+            f"_(يجب أن يحتوي ردك على اسمك الحقيقي: **{اسم_حقيقي}**)_**"
+        )
+
+        محاولات = 0
+        حلف_زين = False
+
+        while محاولات < 3:
+            try:
+                رد5 = await client.wait_for("message", check=check_dm, timeout=180)
+                if اسم_حقيقي.lower() in رد5.content.lower():
+                    حلف_زين = True
+                    break
+                else:
+                    محاولات += 1
+                    if محاولات < 3:
+                        await interaction.user.send(
+                            f"**احلف زين!** _(تبقى لك {3 - محاولات} محاولات)_\n"
+                            f"تأكد أن اسمك **{اسم_حقيقي}** موجود في ردك"
+                        )
+            except:
+                await interaction.user.send("انتهى الوقت! قدم مرة أخرى.")
+                return
+
+        if not حلف_زين:
+            await interaction.user.send(
+                "**قدم مرة اخرى او تواصل مع ادارة السيرفر**"
+            )
+            return
+
+        # التفعيل
+        guild = client.guilds[0]
+        member = guild.get_member(interaction.user.id)
+
+        if not member:
+            await interaction.user.send("حدث خطأ، تواصل مع الإدارة.")
+            return
+
+        # هوية عشوائية
+        هوية = get_random_id()
+        نيك_جديد = f"RC | {اسم_روبلوكس} | {هوية}"
+
+        try:
+            await member.edit(nick=نيك_جديد)
+        except:
+            pass
+
+        # إعطاء وشيل الرتب
+        رتبة_مفعل = guild.get_role(ROLE_ID_مفعل)
+        رتبة_تصريح = guild.get_role(ROLE_ID_تصريح)
+        رتبة_غير_مفعل = guild.get_role(ROLE_ID_غير_مفعل)
+
+        try:
+            if رتبة_غير_مفعل and رتبة_غير_مفعل in member.roles:
+                await member.remove_roles(رتبة_غير_مفعل)
+            if رتبة_مفعل:
+                await member.add_roles(رتبة_مفعل)
+            if رتبة_تصريح:
+                await member.add_roles(رتبة_تصريح)
+        except:
+            pass
+
+        await interaction.user.send(
+            f"🎉 **تم تفعيل حسابك بنجاح!**\n"
+            f"مرحباً بك في روسـت سـيـتـي **{اسم_حقيقي}**!\n"
+            f"هويتك: **{هوية}**"
+        )
+
+    # تسديد المخالفة
+    elif custom_id.startswith("تسديد_"):
         parts = custom_id.split("_")
         member_id = parts[1]
         index = int(parts[2])
@@ -409,133 +434,24 @@ async def on_interaction(interaction):
             violations[member_id][index]["مسددة"] = True
             save_violations(violations)
 
-            try:
-                await interaction.user.send(
-                    f"💰 لتسديد مخالفتك، انسخ هذا الأمر وأرسله في روم تسديد المخالفات:\n"
-                    f"```\n!give <@{BOT_ID_UNBELIEVABOAT}> {سعر}\n```"
+            channel = client.get_channel(CHANNEL_ID_مخالفات)
+            await channel.send(
+                f"{interaction.user.mention}",
+                embed=discord.Embed(
+                    description=(
+                        f"💰 لتسديد مخالفتك، انسخ هذا الأمر وأرسله في روم تسديد المخالفات:\n"
+                        f"```\n!give <@{BOT_ID_UNBELIEVABOAT}> {سعر}\n```"
+                    ),
+                    color=0xFF0000
                 )
-            except:
-                pass
+            )
 
             await interaction.response.send_message(
-                "✅ راجع رسائلك الخاصة للحصول على أمر التسديد!",
+                "✅ راجع الروم للحصول على أمر التسديد!",
                 ephemeral=True
             )
         else:
             await interaction.response.send_message("المخالفة مو موجودة!", ephemeral=True)
-
-    elif custom_id == "select_وظيفة":
-        وظيفة_مختارة = interaction.data["values"][0]
-        اسئلة = اسئلة_وظائف.get(وظيفة_مختارة, [])
-
-        await interaction.response.send_message(
-            f"تم اختيار وظيفة **{وظيفة_مختارة}**، راح تصلك رسالة خاصة بالأسئلة!",
-            ephemeral=True
-        )
-
-        def check(m):
-            return m.author == interaction.user and isinstance(m.channel, discord.DMChannel)
-
-        try:
-            await interaction.user.send(
-                f"مرحباً! بدأت تقديمك لوظيفة **{وظيفة_مختارة}** في روسـت سـيـتـي 👋\n"
-                f"أجب على الأسئلة التالية:"
-            )
-        except:
-            await interaction.followup.send("فعّل الرسائل الخاصة!", ephemeral=True)
-            return
-
-        إجابات = []
-        for سؤال in اسئلة:
-            await interaction.user.send(سؤال)
-            try:
-                رد = await client.wait_for("message", check=check, timeout=120)
-                إجابات.append(رد.content)
-            except:
-                await interaction.user.send("انتهى الوقت!")
-                return
-
-        await interaction.user.send("✅ تم إرسال تقديمك! انتظر رد المسؤولين.")
-
-        قناة = client.get_channel(CHANNEL_ID_مسؤولين)
-        if not قناة:
-            return
-
-        نص_تقديم = (
-            f"# تقديم جديد — {وظيفة_مختارة}\n\n"
-            f"**المتقدم:** {interaction.user.mention}\n\n"
-        )
-        for i, (سؤال, جواب) in enumerate(zip(اسئلة, إجابات)):
-            نص_تقديم += f"**س{i+1}:** {سؤال}\n**ج:** {جواب}\n\n"
-
-        view = discord.ui.View(timeout=None)
-        view.add_item(discord.ui.Button(
-            label="قبول ✅",
-            style=discord.ButtonStyle.success,
-            custom_id=f"قبول_{interaction.user.id}_{وظيفة_مختارة}"
-        ))
-        view.add_item(discord.ui.Button(
-            label="رفض ❌",
-            style=discord.ButtonStyle.danger,
-            custom_id=f"رفض_{interaction.user.id}_{وظيفة_مختارة}"
-        ))
-
-        await قناة.send(نص_تقديم, view=view)
-
-    elif custom_id.startswith("قبول_") or custom_id.startswith("رفض_"):
-        parts = custom_id.split("_")
-        نوع = parts[0]
-        member_id = int(parts[1])
-        وظيفة = parts[2]
-
-        member = interaction.guild.get_member(member_id)
-        if not member:
-            await interaction.response.send_message("العضو ما موجود!", ephemeral=True)
-            return
-
-        if نوع == "قبول":
-            رتبة_id = رتب_وظائف.get(وظيفة)
-            رتبة_عاطل = interaction.guild.get_role(ROLE_ID_عاطل)
-            if رتبة_عاطل and رتبة_عاطل in member.roles:
-                await member.remove_roles(رتبة_عاطل)
-            if رتبة_id:
-                رتبة = interaction.guild.get_role(رتبة_id)
-                if رتبة:
-                    await member.add_roles(رتبة)
-            try:
-                await member.send(
-                    f"🎉 تهانينا! تم **قبولك** في وظيفة **{وظيفة}** في روسـت سـيـتـي!"
-                )
-            except:
-                pass
-            await interaction.response.send_message(
-                f"✅ تم قبول {member.mention} في وظيفة {وظيفة}",
-                ephemeral=True
-            )
-        else:
-            try:
-                await member.send(
-                    f"❌ عذراً، تم **رفض** تقديمك في وظيفة **{وظيفة}** في روسـت سـيـتـي."
-                )
-            except:
-                pass
-            await interaction.response.send_message(
-                f"❌ تم رفض {member.mention}",
-                ephemeral=True
-            )
-
-    elif custom_id.startswith("تقرير_"):
-        parts = custom_id.split("_")
-        نوع = parts[1]
-        مبلغ_عنه = interaction.guild.get_member(int(parts[2]))
-
-        if نوع == "قبول":
-            await interaction.response.send_message(
-                f"✅ تم قبول التقرير على {مبلغ_عنه.mention if مبلغ_عنه else 'العضو'}",
-                ephemeral=True
-            )
-        else:
-            await interaction.response.send_message("❌ تم رفض التقرير", ephemeral=True)
 
 token = os.environ.get("BOT_TOKEN")
 if not token:
