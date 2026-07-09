@@ -11,6 +11,7 @@ tree = app_commands.CommandTree(client)
 
 VIOLATIONS_FILE = "violations.json"
 USED_IDS_FILE = "used_ids.json"
+PENDING_FILE = "pending.json"
 
 # ===== تعديل هنا =====
 CHANNEL_ID_تفعيل = 1523842165547991110
@@ -78,12 +79,22 @@ def save_used_ids(data):
     with open(USED_IDS_FILE, "w") as f:
         json.dump(data, f)
 
+def get_pending():
+    if os.path.exists(PENDING_FILE):
+        with open(PENDING_FILE) as f:
+            return json.load(f)
+    return []
+
+def save_pending(data):
+    with open(PENDING_FILE, "w") as f:
+        json.dump(data, f)
+
 def get_random_id():
     used = get_used_ids()
     available = [i for i in range(1000, 3001) if i not in used]
     if not available:
-        used = []
-    chosen = random.choice(available) if available else random.randint(1000, 3000)
+        available = list(range(1000, 3001))
+    chosen = random.choice(available)
     used.append(chosen)
     save_used_ids(used)
     return chosen
@@ -254,6 +265,30 @@ async def on_interaction(interaction):
 
     # زر طلب التفعيل
     if custom_id == "طلب_تفعيل":
+
+        # منع الضغط أكثر من مرة
+        pending = get_pending()
+        if interaction.user.id in pending:
+            await interaction.response.send_message(
+                "⚠️ أنت بالفعل في طور التفعيل! راجع رسائلك الخاصة.",
+                ephemeral=True
+            )
+            return
+
+        # تحقق إذا عنده رتبة مفعل
+        guild = client.guilds[0]
+        member = guild.get_member(interaction.user.id)
+        رتبة_مفعل = guild.get_role(ROLE_ID_مفعل)
+        if رتبة_مفعل and رتبة_مفعل in member.roles:
+            await interaction.response.send_message(
+                "✅ أنت مفعّل بالفعل!",
+                ephemeral=True
+            )
+            return
+
+        pending.append(interaction.user.id)
+        save_pending(pending)
+
         view = discord.ui.View(timeout=None)
         view.add_item(discord.ui.Button(
             label="توجه للخاص 📩",
@@ -263,33 +298,33 @@ async def on_interaction(interaction):
 
         await interaction.response.send_message(
             embed=discord.Embed(
-                description="✉️ توجّه إلى الخاص لطلب التفعيل 👇",
+                description="👇 توجّه إلى الخاص لطلب التفعيل",
                 color=0xFF0000
             ),
             view=view,
             ephemeral=True
         )
 
-        def check_dm(m):
-            return m.author == interaction.user and isinstance(m.channel, discord.DMChannel)
-
         try:
-            embed_جاهز = discord.Embed(
-                description="هل أنت مستعد لطلب التفعيل؟",
-                color=0xFF0000
-            )
             view_جاهز = discord.ui.View(timeout=None)
             view_جاهز.add_item(discord.ui.Button(
                 label="نعم ✅",
                 style=discord.ButtonStyle.success,
                 custom_id=f"جاهز_{interaction.user.id}"
             ))
-            await interaction.user.send(embed=embed_جاهز, view=view_جاهز)
-        except:
-            await interaction.followup.send(
-                "فعّل الرسائل الخاصة!",
-                ephemeral=True
+            await interaction.user.send(
+                embed=discord.Embed(
+                    description="هل أنت مستعد لطلب التفعيل؟",
+                    color=0xFF0000
+                ),
+                view=view_جاهز
             )
+        except:
+            pending = get_pending()
+            if interaction.user.id in pending:
+                pending.remove(interaction.user.id)
+                save_pending(pending)
+            await interaction.followup.send("فعّل الرسائل الخاصة!", ephemeral=True)
 
     # زر نعم جاهز
     elif custom_id.startswith("جاهز_"):
@@ -303,52 +338,37 @@ async def on_interaction(interaction):
         def check_dm(m):
             return m.author == interaction.user and isinstance(m.channel, discord.DMChannel)
 
-        # السؤال الأول
-        await interaction.user.send("**وش اسـمـك ؟**")
         try:
+            # السؤال الأول
+            await interaction.user.send("**وش اسـمـك ؟**")
             رد1 = await client.wait_for("message", check=check_dm, timeout=120)
             اسم_حقيقي = رد1.content
-        except:
-            await interaction.user.send("انتهى الوقت! قدم مرة أخرى.")
-            return
 
-        # السؤال الثاني
-        await interaction.user.send("**اسـمـك بـالـلـعـبـه ؟**")
-        try:
+            # السؤال الثاني
+            await interaction.user.send("**اسـمـك بـالـلـعـبـه ؟**")
             رد2 = await client.wait_for("message", check=check_dm, timeout=120)
             اسم_روبلوكس = رد2.content
-        except:
-            await interaction.user.send("انتهى الوقت! قدم مرة أخرى.")
-            return
 
-        # السؤال الثالث
-        await interaction.user.send("**اذكـر لـي ثـلاثـه مـن قـوانـيـن الديـسـكـورد ؟**")
-        try:
+            # السؤال الثالث
+            await interaction.user.send("**اذكـر لـي ثـلاثـه مـن قـوانـيـن الديـسـكـورد ؟**")
             await client.wait_for("message", check=check_dm, timeout=180)
-        except:
-            await interaction.user.send("انتهى الوقت! قدم مرة أخرى.")
-            return
 
-        # السؤال الرابع
-        await interaction.user.send("**هـل تـتـعـهـد بـانـك سـتـلـتـزم بـالـقـوانـيـن؟**")
-        try:
+            # السؤال الرابع
+            await interaction.user.send("**هـل تـتـعـهـد بـانـك سـتـلـتـزم بـالـقـوانـيـن؟**")
             await client.wait_for("message", check=check_dm, timeout=120)
-        except:
-            await interaction.user.send("انتهى الوقت! قدم مرة أخرى.")
-            return
 
-        # السؤال الخامس - الحلف
-        await interaction.user.send(
-            f"**اقسم بالله العظيم اني ({اسم_حقيقي}) سوف التزم بجميع قوانين الديسكورد جميعها وقوانين السيرفر جميعها وقوانين الرول جميعها "
-            f"و اقسم بالله العلي العظيم انني لن اخرب السيرفر ولن اساعد او اساهم في تخريبه او تعطيله والله على ما اقول شهيد!**\n\n"
-            f"_يجب أن يحتوي ردك على اسمك: **{اسم_حقيقي}**_"
-        )
+            # السؤال الخامس - الحلف
+            await interaction.user.send(
+                f"**اقسم بالله العظيم اني (اسمك) سوف التزم بجميع قوانين الديسكورد جميعها "
+                f"وقوانين السيرفر جميعها وقوانين الرول جميعها و اقسم بالله العلي العظيم انني "
+                f"لن اخرب السيرفر ولن اساعد او اساهم في تخريبه او تعطيله والله على ما اقول شهيد!**\n\n"
+                f"_يجب أن يحتوي ردك على اسمك_"
+            )
 
-        محاولات = 0
-        حلف_زين = False
+            محاولات = 0
+            حلف_زين = False
 
-        while محاولات < 3:
-            try:
+            while محاولات < 3:
                 رد5 = await client.wait_for("message", check=check_dm, timeout=180)
                 if اسم_حقيقي.lower() in رد5.content.lower():
                     حلف_زين = True
@@ -358,51 +378,58 @@ async def on_interaction(interaction):
                     if محاولات < 3:
                         await interaction.user.send(
                             f"**احلف زين!** تبقى لك {3 - محاولات} محاولات\n"
-                            f"تأكد أن اسمك **{اسم_حقيقي}** موجود في ردك"
+                            f"تأكد أن اسمك موجود في ردك"
                         )
-            except:
-                await interaction.user.send("انتهى الوقت! قدم مرة أخرى.")
+
+            if not حلف_زين:
+                await interaction.user.send("**قدم مرة اخرى او تواصل مع ادارة السيرفر**")
+                pending = get_pending()
+                if interaction.user.id in pending:
+                    pending.remove(interaction.user.id)
+                    save_pending(pending)
                 return
 
-        if not حلف_زين:
-            await interaction.user.send("**قدم مرة اخرى او تواصل مع ادارة السيرفر**")
-            return
+            # التفعيل
+            guild = client.guilds[0]
+            member = guild.get_member(interaction.user.id)
 
-        # التفعيل
-        guild = client.guilds[0]
-        member = guild.get_member(interaction.user.id)
+            if not member:
+                await interaction.user.send("حدث خطأ، تواصل مع الإدارة.")
+                return
 
-        if not member:
-            await interaction.user.send("حدث خطأ، تواصل مع الإدارة.")
-            return
+            هوية = get_random_id()
+            نيك_جديد = f"RC | {اسم_روبلوكس} | {هوية}"
 
-        هوية = get_random_id()
-        نيك_جديد = f"RC | {اسم_روبلوكس} | {هوية}"
+            try:
+                await member.edit(nick=نيك_جديد)
+            except:
+                pass
 
-        try:
-            await member.edit(nick=نيك_جديد)
-        except:
-            pass
+            رتبة_مفعل = guild.get_role(ROLE_ID_مفعل)
+            رتبة_تصريح = guild.get_role(ROLE_ID_تصريح)
+            رتبة_غير_مفعل = guild.get_role(ROLE_ID_غير_مفعل)
 
-        رتبة_مفعل = guild.get_role(ROLE_ID_مفعل)
-        رتبة_تصريح = guild.get_role(ROLE_ID_تصريح)
-        رتبة_غير_مفعل = guild.get_role(ROLE_ID_غير_مفعل)
+            try:
+                if رتبة_غير_مفعل and رتبة_غير_مفعل in member.roles:
+                    await member.remove_roles(رتبة_غير_مفعل)
+                if رتبة_مفعل:
+                    await member.add_roles(رتبة_مفعل)
+                if رتبة_تصريح:
+                    await member.add_roles(رتبة_تصريح)
+            except:
+                pass
 
-        try:
-            if رتبة_غير_مفعل and رتبة_غير_مفعل in member.roles:
-                await member.remove_roles(رتبة_غير_مفعل)
-            if رتبة_مفعل:
-                await member.add_roles(رتبة_مفعل)
-            if رتبة_تصريح:
-                await member.add_roles(رتبة_تصريح)
-        except:
-            pass
+            await interaction.user.send(
+                f"🎉 **تم قبولك! مرحباً بك في روسـت سـيـتـي**"
+            )
 
-        await interaction.user.send(
-            f"🎉 **تم تفعيل حسابك بنجاح!**\n"
-            f"مرحباً بك في روسـت سـيـتـي **{اسم_حقيقي}**!\n"
-            f"هويتك: **{هوية}**"
-        )
+        except asyncio.TimeoutError:
+            await interaction.user.send("انتهى الوقت! قدم مرة أخرى.")
+        finally:
+            pending = get_pending()
+            if interaction.user.id in pending:
+                pending.remove(interaction.user.id)
+                save_pending(pending)
 
     # تسديد المخالفة
     elif custom_id.startswith("تسديد_"):
