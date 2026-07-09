@@ -10,7 +10,7 @@ client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 
 # ===== إعدادات السيرفر (تأكد من تعديل الـ ID) =====
-GUILD_ID = 123456789012345678 # ⚠️ ضع أيدي سيرفرك هنا ⚠️
+GUILD_ID = 1254800517792534539 # ⚠️ ضع أيدي سيرفرك هنا ⚠️
 
 CHANNEL_ID_تفعيل = 1523842165547991110
 CHANNEL_ID_مخالفات = 1524094664288768000
