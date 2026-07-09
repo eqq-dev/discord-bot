@@ -9,11 +9,9 @@ intents.message_content = True
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 
-VIOLATIONS_FILE = "violations.json"
-USED_IDS_FILE = "used_ids.json"
-PENDING_FILE = "pending.json"
+# ===== إعدادات السيرفر (تأكد من تعديل الـ ID) =====
+GUILD_ID = 123456789012345678 # ⚠️ ضع أيدي سيرفرك هنا ⚠️
 
-# ===== تعديل هنا =====
 CHANNEL_ID_تفعيل = 1523842165547991110
 CHANNEL_ID_مخالفات = 1524094664288768000
 CHANNEL_ID_دفع = 1254800520690794556
@@ -24,6 +22,10 @@ ROLE_ID_تصريح = 1523811546428473394
 ROLE_ID_غير_مفعل = 1254800517943525518
 
 BOT_ID_UNBELIEVABOAT = 292953664492929025
+
+VIOLATIONS_FILE = "violations.json"
+USED_IDS_FILE = "used_ids.json"
+PENDING_FILE = "pending.json"
 
 رتب_خصومات = {
     1326183589263572994: 0,
@@ -107,14 +109,20 @@ def get_discount(member):
 
 @client.event
 async def on_ready():
-    print(f"البوت شغال: {client.user}")
+    print(f"✅ البوت شغال: {client.user}")
     await tree.sync()
     await send_activation_message()
 
 async def send_activation_message():
     channel = client.get_channel(CHANNEL_ID_تفعيل)
     if not channel:
+        print("❌ لم يتم العثور على روم التفعيل!")
         return
+
+    # مسح الرسائل القديمة عشان ما تتكرر رسالة التفعيل (اختياري)
+    async for message in channel.history(limit=5):
+        if message.author == client.user:
+            return
 
     embed = discord.Embed(
         title="🎮 تفعيل الحساب",
@@ -150,7 +158,7 @@ async def مخالفة_cmd(
     صورة: discord.Attachment
 ):
     if رقم_المخالفة not in مخالفات_قائمة:
-        await interaction.response.send_message("رقم المخالفة غير صحيح!", ephemeral=True)
+        await interaction.response.send_message("❌ رقم المخالفة غير صحيح!", ephemeral=True)
         return
 
     مخالفة = مخالفات_قائمة[رقم_المخالفة]
@@ -195,7 +203,7 @@ async def مخالفة_cmd(
     ))
 
     await channel.send(رسالة, view=view)
-    await interaction.response.send_message("✅ تم تسجيل المخالفة!", ephemeral=True)
+    await interaction.response.send_message("✅ تم تسجيل المخالفة بنجاح!", ephemeral=True)
 
 @tree.command(name="اضافة_مخالفة", description="إضافة مخالفة يدوياً على عضو")
 async def اضافة_مخالفة_cmd(interaction: discord.Interaction,
@@ -223,7 +231,7 @@ async def ازالة_مخالفة_cmd(interaction: discord.Interaction, عضو: 
     violations = get_violations()
     member_id = str(عضو.id)
     if member_id not in violations or not violations[member_id]:
-        await interaction.response.send_message("ما في مخالفات على هذا العضو!", ephemeral=True)
+        await interaction.response.send_message("❌ ما في مخالفات على هذا العضو!", ephemeral=True)
         return
     violations[member_id].pop()
     save_violations(violations)
@@ -236,7 +244,7 @@ async def ازالة_مخالفة_cmd(interaction: discord.Interaction, عضو: 
 async def احصائيات_cmd(interaction: discord.Interaction):
     violations = get_violations()
     if not violations:
-        await interaction.response.send_message("ما في مخالفات مسجلة!", ephemeral=True)
+        await interaction.response.send_message("❌ ما في مخالفات مسجلة حالياً!", ephemeral=True)
         return
 
     ترتيب = []
@@ -248,7 +256,7 @@ async def احصائيات_cmd(interaction: discord.Interaction):
 
     ترتيب.sort(key=lambda x: x[1], reverse=True)
 
-    نص = "# 🏆 أعلى المخالفات في السيرفر\n\n"
+    نص = "# 🏆 أعلى المخالفات غير المسددة في السيرفر\n\n"
     for i, (member_id, عدد, مجموع) in enumerate(ترتيب[:10]):
         member = interaction.guild.get_member(int(member_id))
         اسم = member.mention if member else f"ID: {member_id}"
@@ -261,12 +269,10 @@ async def on_interaction(interaction):
     if interaction.type != discord.InteractionType.component:
         return
 
-    custom_id = interaction.data["custom_id"]
+    custom_id = interaction.data.get("custom_id", "")
 
-    # زر طلب التفعيل
+    # ================= زر طلب التفعيل =================
     if custom_id == "طلب_تفعيل":
-
-        # منع الضغط أكثر من مرة
         pending = get_pending()
         if interaction.user.id in pending:
             await interaction.response.send_message(
@@ -275,10 +281,14 @@ async def on_interaction(interaction):
             )
             return
 
-        # تحقق إذا عنده رتبة مفعل
-        guild = client.guilds[0]
+        guild = client.get_guild(GUILD_ID)
+        if not guild:
+            await interaction.response.send_message("❌ خطأ: لم يتم العثور على السيرفر.", ephemeral=True)
+            return
+
         member = guild.get_member(interaction.user.id)
         رتبة_مفعل = guild.get_role(ROLE_ID_مفعل)
+        
         if رتبة_مفعل and رتبة_مفعل in member.roles:
             await interaction.response.send_message(
                 "✅ أنت مفعّل بالفعل!",
@@ -298,7 +308,7 @@ async def on_interaction(interaction):
 
         await interaction.response.send_message(
             embed=discord.Embed(
-                description="👇 توجّه إلى الخاص لطلب التفعيل",
+                description="👇 توجّه إلى الخاص لإكمال التفعيل",
                 color=0xFF0000
             ),
             view=view,
@@ -308,61 +318,61 @@ async def on_interaction(interaction):
         try:
             view_جاهز = discord.ui.View(timeout=None)
             view_جاهز.add_item(discord.ui.Button(
-                label="نعم ✅",
+                label="نعم، أنا مستعد ✅",
                 style=discord.ButtonStyle.success,
                 custom_id=f"جاهز_{interaction.user.id}"
             ))
             await interaction.user.send(
                 embed=discord.Embed(
-                    description="هل أنت مستعد لطلب التفعيل؟",
+                    description="هل أنت مستعد لبدء أسئلة التفعيل؟",
                     color=0xFF0000
                 ),
                 view=view_جاهز
             )
-        except:
+        except discord.Forbidden:
             pending = get_pending()
             if interaction.user.id in pending:
                 pending.remove(interaction.user.id)
                 save_pending(pending)
-            await interaction.followup.send("فعّل الرسائل الخاصة!", ephemeral=True)
+            await interaction.followup.send("❌ يرجى فتح رسائلك الخاصة (DMs) ليتمكن البوت من مراسلتك!", ephemeral=True)
 
-    # زر نعم جاهز
+    # ================= زر نعم جاهز (بدء الأسئلة) =================
     elif custom_id.startswith("جاهز_"):
         member_id = int(custom_id.split("_")[1])
         if interaction.user.id != member_id:
-            await interaction.response.send_message("هذا مو لك!", ephemeral=True)
+            await interaction.response.send_message("❌ هذا الزر ليس لك!", ephemeral=True)
             return
 
-        await interaction.response.send_message("✅ ممتاز! سيبدأ معك الآن", ephemeral=True)
+        await interaction.response.send_message("✅ ممتاز! سيبدأ التفعيل الآن.", ephemeral=True)
 
         def check_dm(m):
             return m.author == interaction.user and isinstance(m.channel, discord.DMChannel)
 
         try:
             # السؤال الأول
-            await interaction.user.send("**وش اسـمـك ؟**")
+            await interaction.user.send("**1️⃣ وش اسـمـك ؟**")
             رد1 = await client.wait_for("message", check=check_dm, timeout=120)
             اسم_حقيقي = رد1.content
 
             # السؤال الثاني
-            await interaction.user.send("**اسـمـك بـالـلـعـبـه ؟**")
+            await interaction.user.send("**2️⃣ اسـمـك بـالـلـعـبـه ؟**")
             رد2 = await client.wait_for("message", check=check_dm, timeout=120)
             اسم_روبلوكس = رد2.content
 
             # السؤال الثالث
-            await interaction.user.send("**اذكـر لـي ثـلاثـه مـن قـوانـيـن الديـسـكـورد ؟**")
+            await interaction.user.send("**3️⃣ اذكـر لـي ثـلاثـه مـن قـوانـيـن الديـسـكـورد ؟**")
             await client.wait_for("message", check=check_dm, timeout=180)
 
             # السؤال الرابع
-            await interaction.user.send("**هـل تـتـعـهـد بـانـك سـتـلـتـزم بـالـقـوانـيـن؟**")
+            await interaction.user.send("**4️⃣ هـل تـتـعـهـد بـانـك سـتـلـتـزم بـالـقـوانـيـن؟**")
             await client.wait_for("message", check=check_dm, timeout=120)
 
             # السؤال الخامس - الحلف
             await interaction.user.send(
-                f"**اقسم بالله العظيم اني (اسمك) سوف التزم بجميع قوانين الديسكورد جميعها "
+                f"**5️⃣ اقسم بالله العظيم اني (اسمك) سوف التزم بجميع قوانين الديسكورد جميعها "
                 f"وقوانين السيرفر جميعها وقوانين الرول جميعها و اقسم بالله العلي العظيم انني "
                 f"لن اخرب السيرفر ولن اساعد او اساهم في تخريبه او تعطيله والله على ما اقول شهيد!**\n\n"
-                f"_يجب أن يحتوي ردك على اسمك_"
+                f"_يجب أن يحتوي ردك على اسمك ({اسم_حقيقي})_"
             )
 
             محاولات = 0
@@ -377,34 +387,37 @@ async def on_interaction(interaction):
                     محاولات += 1
                     if محاولات < 3:
                         await interaction.user.send(
-                            f"**احلف زين!** تبقى لك {3 - محاولات} محاولات\n"
-                            f"تأكد أن اسمك موجود في ردك"
+                            f"❌ **احلف زين!** تأكد أن اسمك موجود في ردك.\nتبقى لك {3 - محاولات} محاولات."
                         )
 
             if not حلف_زين:
-                await interaction.user.send("**قدم مرة اخرى او تواصل مع ادارة السيرفر**")
+                await interaction.user.send("❌ **فشلت في التفعيل.** قدم مرة أخرى لاحقاً أو تواصل مع إدارة السيرفر.")
                 pending = get_pending()
                 if interaction.user.id in pending:
                     pending.remove(interaction.user.id)
                     save_pending(pending)
                 return
 
-            # التفعيل
-            guild = client.guilds[0]
+            # ================= مرحلة إعطاء الرتب وتغيير الاسم =================
+            guild = client.get_guild(GUILD_ID)
             member = guild.get_member(interaction.user.id)
 
             if not member:
-                await interaction.user.send("حدث خطأ، تواصل مع الإدارة.")
+                await interaction.user.send("حدث خطأ: لم أتمكن من العثور عليك في السيرفر!")
                 return
 
+            # 1. تغيير النيك نيم
             هوية = get_random_id()
             نيك_جديد = f"RC | {اسم_روبلوكس} | {هوية}"
 
             try:
                 await member.edit(nick=نيك_جديد)
-            except:
-                pass
+            except discord.Forbidden:
+                print(f"❌ البوت لا يملك صلاحية تغيير اسم العضو: {member.name}. تأكد من رفع رتبة البوت فوق رتبة العضو!")
+            except discord.HTTPException as e:
+                print(f"❌ حدث خطأ أثناء تغيير اللقب: {e}")
 
+            # 2. إعطاء الرتب
             رتبة_مفعل = guild.get_role(ROLE_ID_مفعل)
             رتبة_تصريح = guild.get_role(ROLE_ID_تصريح)
             رتبة_غير_مفعل = guild.get_role(ROLE_ID_غير_مفعل)
@@ -416,22 +429,22 @@ async def on_interaction(interaction):
                     await member.add_roles(رتبة_مفعل)
                 if رتبة_تصريح:
                     await member.add_roles(رتبة_تصريح)
-            except:
-                pass
+            except discord.Forbidden:
+                print("❌ البوت لا يملك صلاحية إدارة الرتب! تأكد من إعطائه Manage Roles ورفع رتبته للأعلى.")
+            except Exception as e:
+                print(f"❌ حدث خطأ أثناء إعطاء الرتب: {e}")
 
-            await interaction.user.send(
-                f"🎉 **تم قبولك! مرحباً بك في روسـت سـيـتـي**"
-            )
+            await interaction.user.send("🎉 **تم قبولك بنجاح! مرحباً بك في روسـت سـيـتـي.**")
 
         except asyncio.TimeoutError:
-            await interaction.user.send("انتهى الوقت! قدم مرة أخرى.")
+            await interaction.user.send("⏳ انتهى الوقت المخصص للإجابة! يرجى التقديم مرة أخرى.")
         finally:
             pending = get_pending()
             if interaction.user.id in pending:
                 pending.remove(interaction.user.id)
                 save_pending(pending)
 
-    # تسديد المخالفة
+    # ================= زر تسديد المخالفة =================
     elif custom_id.startswith("تسديد_"):
         parts = custom_id.split("_")
         member_id = parts[1]
@@ -439,11 +452,16 @@ async def on_interaction(interaction):
         سعر = int(parts[3])
 
         if str(interaction.user.id) != member_id:
-            await interaction.response.send_message("هذه المخالفة مو عليك!", ephemeral=True)
+            await interaction.response.send_message("❌ هذه المخالفة مو عليك!", ephemeral=True)
             return
 
         violations = get_violations()
         if member_id in violations and index < len(violations[member_id]):
+            # التحقق إذا كانت مسددة مسبقاً
+            if violations[member_id][index].get("مسددة", False):
+                 await interaction.response.send_message("✅ هذه المخالفة مسددة بالفعل!", ephemeral=True)
+                 return
+                 
             violations[member_id][index]["مسددة"] = True
             save_violations(violations)
 
@@ -453,15 +471,15 @@ async def on_interaction(interaction):
                         f"💰 انسخ هذا الأمر وأرسله في روم تسديد المخالفات:\n"
                         f"```\n!give <@{BOT_ID_UNBELIEVABOAT}> {سعر}\n```"
                     ),
-                    color=0xFF0000
+                    color=0x00FF00
                 ),
                 ephemeral=True
             )
         else:
-            await interaction.response.send_message("المخالفة مو موجودة!", ephemeral=True)
+            await interaction.response.send_message("❌ المخالفة مو موجودة أو حدث خطأ!", ephemeral=True)
 
 token = os.environ.get("BOT_TOKEN")
 if not token:
-    print("BOT_TOKEN مو موجود!")
+    print("❌ توكن البوت (BOT_TOKEN) غير موجود! تأكد من إضافته في إعدادات Railway.")
 else:
     client.run(token)
