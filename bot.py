@@ -16,12 +16,11 @@ USED_IDS_FILE = "used_ids.json"
 CHANNEL_ID_تفعيل = 1523842165547991110
 CHANNEL_ID_مخالفات = 1524094664288768000
 CHANNEL_ID_دفع = 1254800520690794556
+CHANNEL_ID_مسؤولين = 1270689174474850326
 
 ROLE_ID_مفعل = 1523811436034527384
 ROLE_ID_تصريح = 1523811546428473394
 ROLE_ID_غير_مفعل = 1254800517943525518
-
-CHANNEL_ID_مسؤولين = 1270689174474850326
 
 BOT_ID_UNBELIEVABOAT = 292953664492929025
 
@@ -83,8 +82,8 @@ def get_random_id():
     used = get_used_ids()
     available = [i for i in range(1000, 3001) if i not in used]
     if not available:
-        return random.randint(1000, 3000)
-    chosen = random.choice(available)
+        used = []
+    chosen = random.choice(available) if available else random.randint(1000, 3000)
     used.append(chosen)
     save_used_ids(used)
     return chosen
@@ -123,7 +122,6 @@ async def send_activation_message():
 
     await channel.send(embed=embed, view=view)
 
-# ===== سلاش كوماند المخالفات =====
 @tree.command(name="مخالفة", description="تسجيل مخالفة على عضو")
 @app_commands.describe(
     عسكري="يوزر العسكري",
@@ -188,7 +186,6 @@ async def مخالفة_cmd(
     await channel.send(رسالة, view=view)
     await interaction.response.send_message("✅ تم تسجيل المخالفة!", ephemeral=True)
 
-# ===== سلاش كوماند إضافة مخالفة =====
 @tree.command(name="اضافة_مخالفة", description="إضافة مخالفة يدوياً على عضو")
 async def اضافة_مخالفة_cmd(interaction: discord.Interaction,
                              عضو: discord.Member,
@@ -210,7 +207,6 @@ async def اضافة_مخالفة_cmd(interaction: discord.Interaction,
         ephemeral=True
     )
 
-# ===== سلاش كوماند إزالة مخالفة =====
 @tree.command(name="ازالة_مخالفة", description="إزالة آخر مخالفة عن عضو")
 async def ازالة_مخالفة_cmd(interaction: discord.Interaction, عضو: discord.Member):
     violations = get_violations()
@@ -225,7 +221,6 @@ async def ازالة_مخالفة_cmd(interaction: discord.Interaction, عضو: 
         ephemeral=True
     )
 
-# ===== سلاش كوماند الإحصائيات =====
 @tree.command(name="احصائيات", description="أعلى المخالفات في السيرفر")
 async def احصائيات_cmd(interaction: discord.Interaction):
     violations = get_violations()
@@ -259,17 +254,6 @@ async def on_interaction(interaction):
 
     # زر طلب التفعيل
     if custom_id == "طلب_تفعيل":
-        channel = client.get_channel(CHANNEL_ID_تفعيل)
-
-        رسالة_الروم = await channel.send(
-            f"{interaction.user.mention}",
-            embed=discord.Embed(
-                description="توجّه إلى الخاص لطلب التفعيل 👇",
-                color=0xFF0000
-            ),
-            view=discord.ui.View(timeout=None)
-        )
-
         view = discord.ui.View(timeout=None)
         view.add_item(discord.ui.Button(
             label="توجه للخاص 📩",
@@ -277,8 +261,14 @@ async def on_interaction(interaction):
             url=f"https://discord.com/users/{client.user.id}"
         ))
 
-        await رسالة_الروم.edit(view=view)
-        await interaction.response.defer()
+        await interaction.response.send_message(
+            embed=discord.Embed(
+                description="✉️ توجّه إلى الخاص لطلب التفعيل 👇",
+                color=0xFF0000
+            ),
+            view=view,
+            ephemeral=True
+        )
 
         def check_dm(m):
             return m.author == interaction.user and isinstance(m.channel, discord.DMChannel)
@@ -296,9 +286,9 @@ async def on_interaction(interaction):
             ))
             await interaction.user.send(embed=embed_جاهز, view=view_جاهز)
         except:
-            await channel.send(
-                f"{interaction.user.mention} فعّل الرسائل الخاصة!",
-                delete_after=5
+            await interaction.followup.send(
+                "فعّل الرسائل الخاصة!",
+                ephemeral=True
             )
 
     # زر نعم جاهز
@@ -313,7 +303,7 @@ async def on_interaction(interaction):
         def check_dm(m):
             return m.author == interaction.user and isinstance(m.channel, discord.DMChannel)
 
-        # السؤال الأول - الاسم الحقيقي
+        # السؤال الأول
         await interaction.user.send("**وش اسـمـك ؟**")
         try:
             رد1 = await client.wait_for("message", check=check_dm, timeout=120)
@@ -322,7 +312,7 @@ async def on_interaction(interaction):
             await interaction.user.send("انتهى الوقت! قدم مرة أخرى.")
             return
 
-        # السؤال الثاني - اسم الروبلوكس
+        # السؤال الثاني
         await interaction.user.send("**اسـمـك بـالـلـعـبـه ؟**")
         try:
             رد2 = await client.wait_for("message", check=check_dm, timeout=120)
@@ -334,7 +324,7 @@ async def on_interaction(interaction):
         # السؤال الثالث
         await interaction.user.send("**اذكـر لـي ثـلاثـه مـن قـوانـيـن الديـسـكـورد ؟**")
         try:
-            رد3 = await client.wait_for("message", check=check_dm, timeout=180)
+            await client.wait_for("message", check=check_dm, timeout=180)
         except:
             await interaction.user.send("انتهى الوقت! قدم مرة أخرى.")
             return
@@ -342,16 +332,16 @@ async def on_interaction(interaction):
         # السؤال الرابع
         await interaction.user.send("**هـل تـتـعـهـد بـانـك سـتـلـتـزم بـالـقـوانـيـن؟**")
         try:
-            رد4 = await client.wait_for("message", check=check_dm, timeout=120)
+            await client.wait_for("message", check=check_dm, timeout=120)
         except:
             await interaction.user.send("انتهى الوقت! قدم مرة أخرى.")
             return
 
-        # السؤال الخامس - الحلف مع التحقق
+        # السؤال الخامس - الحلف
         await interaction.user.send(
-            f"**احلف انك سوف تلتزم بقوانين الديسكورد جميعها وقوانين السيرفر جميعها وقوانين الرول جميعها كذلك "
-            f"واحلف انك ماتخرب السيرفر او تساهم في تخريب السيرفر واحلف انك ماتشتم وتقذف والسب بجميع انواعه!\n\n"
-            f"_(يجب أن يحتوي ردك على اسمك الحقيقي: **{اسم_حقيقي}**)_**"
+            f"**اقسم بالله العظيم اني ({اسم_حقيقي}) سوف التزم بجميع قوانين الديسكورد جميعها وقوانين السيرفر جميعها وقوانين الرول جميعها "
+            f"و اقسم بالله العلي العظيم انني لن اخرب السيرفر ولن اساعد او اساهم في تخريبه او تعطيله والله على ما اقول شهيد!**\n\n"
+            f"_يجب أن يحتوي ردك على اسمك: **{اسم_حقيقي}**_"
         )
 
         محاولات = 0
@@ -367,7 +357,7 @@ async def on_interaction(interaction):
                     محاولات += 1
                     if محاولات < 3:
                         await interaction.user.send(
-                            f"**احلف زين!** _(تبقى لك {3 - محاولات} محاولات)_\n"
+                            f"**احلف زين!** تبقى لك {3 - محاولات} محاولات\n"
                             f"تأكد أن اسمك **{اسم_حقيقي}** موجود في ردك"
                         )
             except:
@@ -375,9 +365,7 @@ async def on_interaction(interaction):
                 return
 
         if not حلف_زين:
-            await interaction.user.send(
-                "**قدم مرة اخرى او تواصل مع ادارة السيرفر**"
-            )
+            await interaction.user.send("**قدم مرة اخرى او تواصل مع ادارة السيرفر**")
             return
 
         # التفعيل
@@ -388,7 +376,6 @@ async def on_interaction(interaction):
             await interaction.user.send("حدث خطأ، تواصل مع الإدارة.")
             return
 
-        # هوية عشوائية
         هوية = get_random_id()
         نيك_جديد = f"RC | {اسم_روبلوكس} | {هوية}"
 
@@ -397,7 +384,6 @@ async def on_interaction(interaction):
         except:
             pass
 
-        # إعطاء وشيل الرتب
         رتبة_مفعل = guild.get_role(ROLE_ID_مفعل)
         رتبة_تصريح = guild.get_role(ROLE_ID_تصريح)
         رتبة_غير_مفعل = guild.get_role(ROLE_ID_غير_مفعل)
@@ -434,20 +420,14 @@ async def on_interaction(interaction):
             violations[member_id][index]["مسددة"] = True
             save_violations(violations)
 
-            channel = client.get_channel(CHANNEL_ID_مخالفات)
-            await channel.send(
-                f"{interaction.user.mention}",
+            await interaction.response.send_message(
                 embed=discord.Embed(
                     description=(
-                        f"💰 لتسديد مخالفتك، انسخ هذا الأمر وأرسله في روم تسديد المخالفات:\n"
+                        f"💰 انسخ هذا الأمر وأرسله في روم تسديد المخالفات:\n"
                         f"```\n!give <@{BOT_ID_UNBELIEVABOAT}> {سعر}\n```"
                     ),
                     color=0xFF0000
-                )
-            )
-
-            await interaction.response.send_message(
-                "✅ راجع الروم للحصول على أمر التسديد!",
+                ),
                 ephemeral=True
             )
         else:
